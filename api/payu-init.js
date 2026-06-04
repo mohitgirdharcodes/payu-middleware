@@ -14,32 +14,30 @@ module.exports = function handler(req, res) {
   const firstname = req.query.firstname || 'Customer';
   const email = req.query.email || 'customer@example.com';
   const phone = req.query.phone || '9999999999';
+  const variantId = req.query.variantId || '';   // Shopify variant ID
+  const quantity = req.query.quantity || '1';
 
-  const surl = 'https://lessmrp.com/pages/thank-you';
-  const furl = 'https://lessmrp.com/pages/payment-failed';
+  // Middleware ke success/failure URLs
+  const surl = 'https://payu-middleware.vercel.app/api/payu-success';
+  const furl = 'https://payu-middleware.vercel.app/api/payu-failure';
 
   const txnid = 'TXN' + Date.now() + Math.random().toString(36).substr(2, 5);
 
-  const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
+  // udf1 = variantId, udf2 = quantity
+  const udf1 = variantId;
+  const udf2 = quantity;
+  const udf3 = '';
+
+  const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|${udf1}|${udf2}|${udf3}||||||${salt}`;
   const hash = crypto.createHash('sha512').update(hashString).digest('hex');
 
   const html = `<!DOCTYPE html>
 <html>
-  <head>
-    <title>Redirecting to PayU...</title>
-    <style>
-      body { font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; background:#f5f5f5; }
-      .box { text-align:center; background:white; padding:40px; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.1); }
-      .spinner { border:4px solid #f3f3f3; border-top:4px solid #2d6a4f; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:0 auto 20px; }
-      @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-    </style>
-  </head>
+  <head><title>Redirecting to PayU...</title></head>
   <body onload="document.forms.payu.submit()">
-    <div class="box">
-      <div class="spinner"></div>
-      <h3>Redirecting to secure payment page...</h3>
-      <p style="color:#888">Please do not close this window.</p>
-    </div>
+    <p style="font-family:sans-serif;text-align:center;margin-top:100px;">
+      Redirecting to payment page...
+    </p>
     <form name="payu" method="post" action="https://secure.payu.in/_payment">
       <input type="hidden" name="key" value="${key}">
       <input type="hidden" name="txnid" value="${txnid}">
@@ -50,6 +48,9 @@ module.exports = function handler(req, res) {
       <input type="hidden" name="phone" value="${phone}">
       <input type="hidden" name="surl" value="${surl}">
       <input type="hidden" name="furl" value="${furl}">
+      <input type="hidden" name="udf1" value="${udf1}">
+      <input type="hidden" name="udf2" value="${udf2}">
+      <input type="hidden" name="udf3" value="${udf3}">
       <input type="hidden" name="hash" value="${hash}">
     </form>
   </body>
